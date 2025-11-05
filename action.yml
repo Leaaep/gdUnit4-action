@@ -182,39 +182,6 @@ runs:
         ls --color=auto -lsA ./addons
         echo -e "\e[34m -----------------\e[0m"
 
-    - name: 'Set .NET SDK version'
-      if: ${{ steps.version_check.outcome == 'success' && !cancelled() && (inputs.godot-net == 'true' || inputs.godot-force-mono == 'true') }}
-      shell: bash
-      run: |
-        sdk_version=$(echo "${{ inputs.dotnet-version }}" | sed 's/^net\([0-9]\.[0-9]\)$/\1.x/')
-        echo "SDK_VERSION=$sdk_version" >> "$GITHUB_ENV"
-        echo "Using .NET version: '$sdk_version'"
-
-    - name: 'Setup .NET SDK'
-      if: ${{ steps.version_check.outcome == 'success' && !cancelled() && (inputs.godot-net == 'true' || inputs.godot-force-mono == 'true') }}
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: '${{ env.SDK_VERSION }}'
-
-    - name: 'Restore .Net Project'
-      if: ${{ steps.version_check.outcome == 'success' && !cancelled() && (inputs.godot-net == 'true' || inputs.godot-force-mono == 'true') }}
-      shell: bash
-      run: |
-        cd "${{ inputs.project_dir }}"
-        
-        # for gdunit version less than 4.2.2 we need to load api version 4.2.1.1
-        gdUnitVersion=$(echo "${{ inputs.version }}" | sed 's/^v//; s/\.//g')
-        if [[ ${gdUnitVersion} < 422 ]]; then
-          # install required packages
-          echo "gdUnit4 version ${gdUnitVersion} less 4.2.2, update project to gdUnit4.api v4.2.1"
-          dotnet add package gdUnit4.api --version 4.2.1
-          dotnet add package gdUnit4.test.adapter --version 1.0.0
-        fi
-        
-        dotnet --version
-        dotnet build
-        dotnet list package
-
     - name: 'Restore Godot project cache'
       if: ${{ steps.version_check.outcome == 'success' && !cancelled() }}
       env:
@@ -232,7 +199,7 @@ runs:
       if: ${{ steps.version_check.outcome == 'success' && !cancelled() && env.RUN_GDSCRIPT_TESTS == 'true'}}
       env:
         GODOT_BIN: '/home/runner/godot-linux/godot'
-      uses: actions/github-script@v8
+      uses: https://github.com/actions/github-script@v8
       with:
         script: |
           const { runTests } = require('./.gdunit4_action/unit-test/index.js')
@@ -246,39 +213,6 @@ runs:
           };
           const exitCode =  await runTests(args, core);
           core.setOutput('exit_code', exitCode);
-
-    - name: 'Publish GDScript Unit Test Reports'
-      if: ${{ steps.version_check.outcome == 'success' && !cancelled() && inputs.publish-report == 'true' && env.RUN_GDSCRIPT_TESTS == 'true'}}
-      uses: ./.gdunit4_action/publish-test-report
-      with:
-        project_dir: ${{ inputs.project_dir }}
-        report-name: ${{ inputs.report-name }}
-        reporter: java-junit
-
-    ## .Net test run
-    - name: 'Run C# Tests'
-      if: ${{ steps.version_check.outcome == 'success' && !cancelled() && env.RUN_GDSCRIPT_TESTS == 'false' }}
-      env:
-        GODOT_BIN: '/home/runner/godot-linux/godot'
-      shell: bash
-      run: |
-        cd "${{ inputs.project_dir }}"
-        # test if a .runsettings file exists, if not use the action provided default .runsettings
-        if [ -f .runsettings ]; then
-          echo "Found `.runsettings` file."
-        else
-          echo "No project specific '.runsettings' found, using action default '.runsettings'"
-          cp $GITHUB_ACTION_PATH/.gdunit4_action/.runsettings .
-        fi
-        xvfb-run --auto-servernum dotnet test --no-build --settings .runsettings --results-directory ./reports --logger "trx;LogFileName=results.xml" -- GdUnit4.Parameters="--audio-driver Dummy --display-driver x11 --rendering-driver opengl3 --screen 0"
-
-    - name: 'Publish .Net Unit Test Reports'
-      if: ${{ steps.version_check.outcome == 'success' && !cancelled() && inputs.publish-report == 'true' && env.RUN_GDSCRIPT_TESTS == 'false' }}
-      uses: ./.gdunit4_action/publish-test-report
-      with:
-        project_dir: ${{ inputs.project_dir }}
-        report-name: ${{ inputs.report-name }}
-        reporter: dotnet-trx
 
     ## Finally upload the test result artifacts
     - name: 'Upload Unit Test Reports'

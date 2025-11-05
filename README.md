@@ -37,8 +37,7 @@ This GitHub Action automates the execution of GdUnit4 (GDScript) and GdUnit4Net 
 - Godot .NET version
 
 ### System Requirements
-- GitHub Actions runner (Ubuntu latest recommended)
-- Git with LFS support for larger projects
+- Forgejo Actions
 
 ## Quick Start
 

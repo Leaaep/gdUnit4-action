@@ -35,9 +35,9 @@ runs:
         fi
 
         DOWNLOAD_URL=https://github.com/godotengine/godot-builds/releases/download/${{ inputs.godot-version }}-${{ inputs.godot-status-version }}
-        GODOT_BIN=Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status-version }}_linux.x86_64
+        GODOT_BIN=Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status-version }}_linux.arm64
         if ${{inputs.godot-net == 'true'}}; then
-          GODOT_BIN=Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status-version }}_mono_linux_x86_64
+          GODOT_BIN=Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status-version }}_mono_linux_arm64
         fi
 
         GODOT_PACKAGE=$GODOT_BIN.zip
