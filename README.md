@@ -27,15 +27,6 @@ This GitHub Action automates the execution of GdUnit4 (GDScript) and GdUnit4Net 
 
 ## Requirements
 
-### Godot Compatibility
-- Godot 4.x (4.0.0 and above)
-- Both standard and .NET versions supported
-- Tested with stable, RC, and dev builds
-
-### For C# Testing
-- .NET SDK 7.0 or 8.0
-- Godot .NET version
-
 ### System Requirements
 - Forgejo Actions
 
@@ -48,13 +39,27 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: docker
     steps:
-      - uses: actions/checkout@v4
-      - uses: MikeSchulze/gdunit4-action@v1
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git-lfs xvfb libx11-6 libxext6 libxi6 libxrandr2 libxcursor1 libxinerama1 libxss1 libwayland-client0 libgl1-mesa-glx
+      - name: Checkout
+        uses: actions/checkout@v5
         with:
-          godot-version: '4.2.1'
+          lfs: true
+
+      - name: Disable plugins
+        run: |
+          sed -i 's/enabled=PackedStringArray.*/enabled=PackedStringArray()/g' project.godot
+
+      - name: Run tests
+        uses: https://github.com/Leaaep/gdUnit4-action@v1
+        with:
+          godot-version: '4.5.1'
           paths: 'res://tests'
+          publish-results: false
 ```
 
 ## Usage
@@ -62,7 +67,7 @@ jobs:
 The action can be configured using various inputs to suit your testing needs. Here's a basic usage pattern:
 
 ```yaml
-- uses: MikeSchulze/gdunit4-action@v1
+- uses: Leaaep/gdunit4-action@v1
   with:
     godot-version: '4.2.1'       # Required: Godot version to use
     paths: 'res://tests'         # Required: Test directory
@@ -84,14 +89,6 @@ The action can be configured using various inputs to suit your testing needs. He
 |-----------------|----------|---------|---------------------------------------------|
 | godot-version   | Yes      |         | Godot version (e.g., "4.2.1")               |
 | godot-status    | No       | stable  | Godot status (stable/rc1/dev1)              |
-| godot-net       | No       | false   | Enable Godot .NET for C# tests              |
-| godot-force-mono| No       | false   | Force using Godot Net to run GDScript tests |
-
-### .NET Configuration
-
-| Parameter       | Required | Default | Description |
-|----------------|----------|---------|-------------|
-| dotnet-version | No       | net8.0  | .NET version (net7.0/net8.0) |
 
 ### Test Configuration
 
@@ -106,81 +103,8 @@ The action can be configured using various inputs to suit your testing needs. He
 
 | Parameter       | Required | Default | Description |
 |----------------|----------|---------|-------------|
-| publish-report | No       | true    | Enable test report publishing |
 | upload-report  | No       | true    | Enable report artifact upload |
 | report-name    | No       | test-report.xml | Report filename |
-
-## Examples
-
-### Basic GDScript Testing
-```yaml
-- uses: MikeSchulze/gdunit4-action@v1
-  with:
-    godot-version: '4.2.1'
-    paths: 'res://tests'
-```
-
-### Testing with Warnings threaded as Errors
-```yaml
-- uses: MikeSchulze/gdunit4-action@v1
-  with:
-     godot-version: '4.2.1'
-     paths: 'res://tests'
-     warnings-as-errors: true  # Fail the build on test warnings
-```
-
-### C# Testing with .NET 8.0
-```yaml
-- uses: MikeSchulze/gdunit4-action@v1
-  with:
-    godot-version: '4.2.1'
-    godot-net: true
-    paths: 'res://tests'
-```
-
-### Matrix Testing
-```yaml
-jobs:
-  test:
-    strategy:
-      matrix:
-        godot-version: ['4.1.3', '4.2.1']
-        dotnet-version: ['net7.0', 'net8.0']
-    steps:
-      - uses: MikeSchulze/gdunit4-action@v1
-        with:
-          godot-version: ${{ matrix.godot-version }}
-          godot-net: true
-          dotnet-version: ${{ matrix.dotnet-version }}
-          paths: 'res://tests'
-```
-
-### Testing with Retries and Custom Arguments
-```yaml
-- uses: MikeSchulze/gdunit4-action@v1
-  with:
-    godot-version: '4.2.1'
-    paths: 'res://tests'
-    retries: 3
-    arguments: '--verbose --fail-fast'
-```
-
-### Custom Project Structure
-For projects with non-standard layout:
-```bash
-root/
-  ├── MyProject/
-  │   ├── src/
-  │   └── tests/
-```
-
-```yaml
-- uses: MikeSchulze/gdunit4-action@v1
-  with:
-    godot-version: '4.2.1'
-    project_dir: './MyProject/'
-    paths: 'res://tests'
-```
 
 ## Troubleshooting
 

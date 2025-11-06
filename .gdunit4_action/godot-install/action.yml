@@ -10,10 +10,6 @@ inputs:
     description: 'The Godot engine status version'
     type: string
     required: true
-  godot-net:
-    required: false
-    type: boolean
-    default: false
   install-path:
     type: string
     required: true
@@ -36,9 +32,6 @@ runs:
 
         DOWNLOAD_URL=https://github.com/godotengine/godot-builds/releases/download/${{ inputs.godot-version }}-${{ inputs.godot-status-version }}
         GODOT_BIN=Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status-version }}_linux.arm64
-        if ${{inputs.godot-net == 'true'}}; then
-          GODOT_BIN=Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status-version }}_mono_linux_arm64
-        fi
 
         GODOT_PACKAGE=$GODOT_BIN.zip
         echo "Download URL: $DOWNLOAD_URL/$GODOT_PACKAGE"
@@ -48,11 +41,6 @@ runs:
 
         if ${{runner.OS == 'Linux'}}; then
           echo "Run linux part"
-
-          if ${{inputs.godot-net == 'true'}}; then
-            mv ${{ inputs.install-path }}/$GODOT_BIN/* ${{ inputs.install-path }}
-            rmdir ${{ inputs.install-path }}/$GODOT_BIN/
-          fi
 
           mv ${{ inputs.install-path }}/Godot_v* ${{ inputs.install-path }}/godot
           chmod u+x ${{ inputs.install-path }}/godot

@@ -10,22 +10,10 @@ inputs:
     description: 'The Godot status (e.g., "stable", "rc1", "dev1")'
     required: false
     default: 'stable'
-  godot-net:
-    description: 'Set to true for Godot .Net (C#).'
-    required: false
-    default: 'false'
-  godot-force-mono:
-    description: 'Force test run to use Godot Mono version'
-    required: false
-    default: 'false'
   version:
     description: 'The version of GdUnit4 to use. (e.g. "v4.2.0", "latest", "master").'
     required: false
     default: latest
-  dotnet-version:
-    description: 'The used .NET version to run the test (e.g. "net7.0", "net8.0")'
-    required: false
-    default: net8.0
   paths:
     description: 'Comma-separated or newline-separated list of directories containing test to execute.'
     required: true
@@ -102,13 +90,7 @@ runs:
     - name: 'Set Cache Name'
       shell: bash
       run: |
-        if ${{inputs.godot-net == 'true' || inputs.godot-force-mono == 'true'}}; then
-            echo "CACHE_NAME=${{ runner.OS }}-Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status }}-${{ inputs.dotnet-version }}" >> "$GITHUB_ENV"
-        else
-            echo "CACHE_NAME=${{ runner.OS }}-Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status }}" >> "$GITHUB_ENV"
-        fi
-
-        echo "RUN_GDSCRIPT_TESTS=${{inputs.godot-net == 'false'}}" >> "$GITHUB_ENV"
+        echo "CACHE_NAME=${{ runner.OS }}-Godot_v${{ inputs.godot-version }}-${{ inputs.godot-status }}" >> "$GITHUB_ENV"
 
     - name: 'Build Cache'
       uses: actions/cache@v4
@@ -124,7 +106,6 @@ runs:
       uses: ./.gdunit4_action/godot-install
       with:
         godot-version: ${{ inputs.godot-version }}
-        godot-net: ${{inputs.godot-net == 'true' || inputs.godot-force-mono == 'true'}}
         godot-status-version: ${{ inputs.godot-status }}
         install-path: '/home/runner/godot-linux'
 
